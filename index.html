@@ -239,18 +239,32 @@
   const renderControls = () => {
     const body = document.querySelector("body")
     const controls = document.createElement('div')
-    const arrowUp = document.createElement('h4')
-    const arrowDown = document.createElement('h4')
-    const arrowLeft = document.createElement('h4')
-    const arrowRight = document.createElement('h4')
+    const controlRow = document.createElement('div')
+    const arrowUp = document.createElement('h2')
+    const arrowDown = document.createElement('h2')
+    const arrowLeft = document.createElement('h2')
+    const arrowRight = document.createElement('h2')
 
-    arrowUp.innerText = ''
-    arrowDown.innerText = ''
-    arrowLeft.innerText = ''
-    arrowRight.innerText = ''
+    arrowUp.innerText = '▲'
+    arrowDown.innerText = '▼'
+    arrowLeft.innerText = '◄'
+    arrowRight.innerText = '►'
 
-    
+    arrowUp.style = 'margin: 0;'
+    arrowDown.style = 'margin: 0;'
+    arrowLeft.style = 'margin: 0;'
+    arrowRight.style = 'margin: 0;'
+
+    controls.style = 'display: flex; flex-direction: column; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; margin: 1rem; align-items: center; color: white; height: 8rem; width: 8rem; justify-content: space-between'
+    controlRow.style = 'display: flex; flex-direction: row; justify-content: space-between;'
+
+    controlRow.append(arrowLeft, arrowRight)
+    controls.append(arrowUp, controlRow, arrowDown)
+
+    body.append(controls)
   }
+
+  renderControls()
 
   let frame = 0;
   let spawnRate = 150;
