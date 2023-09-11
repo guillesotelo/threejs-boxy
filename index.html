@@ -1,0 +1,280 @@
+<style>
+  body {
+    margin: 0;
+    background: #0c4a6e;
+  }
+</style>
+
+<script
+  async
+  src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+></script>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(5, 4, 8);
+
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  });
+  renderer.shadowMap.enabled = true;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+
+  class Box extends THREE.Mesh {
+    constructor({
+      width,
+      height,
+      depth,
+      color = "#00ff00",
+      velocity = { x: 0, y: 0, z: 0 },
+      position = { x: 0, y: 0, z: 0 },
+      zAccelleration = false,
+    }) {
+      super(
+        new THREE.BoxGeometry(width, height, depth),
+        new THREE.MeshStandardMaterial({ color })
+      );
+
+      this.height = height;
+      this.width = width;
+      this.depth = depth;
+
+      this.position.set(position.x, position.y, position.z);
+
+      this.right = this.position.x + this.width / 2;
+      this.left = this.position.x - this.width / 2;
+
+      this.bottom = this.position.y - this.height / 2;
+      this.top = this.position.y + this.height / 2;
+
+      this.front = this.position.z + this.depth / 2;
+      this.back = this.position.z - this.depth / 2;
+
+      this.velocity = velocity;
+      this.gravity = -0.002;
+
+      this.zAccelleration = zAccelleration;
+    }
+
+    updateSides() {
+      this.right = this.position.x + this.width / 2
+      this.left = this.position.x - this.width / 2
+
+      this.bottom = this.position.y - this.height / 2
+      this.top = this.position.y + this.height / 2
+
+      this.front = this.position.z + this.depth / 2
+      this.back = this.position.z - this.depth / 2
+    }
+
+    update(ground) {
+      this.updateSides();
+
+      if (this.zAccelleration) this.velocity.z += 0.0003;
+
+      // Movements
+      this.position.x += this.velocity.x;
+      this.position.z += this.velocity.z;
+
+      this.applyGravity(ground);
+    }
+
+    applyGravity() {
+      this.velocity.y += this.gravity;
+
+      if (boxCollision(this, ground)) {
+        // We hit the ground
+        const friction = 0.5;
+        this.velocity.y *= friction;
+        this.velocity.y = -this.velocity.y;
+      } else this.position.y += this.velocity.y;
+    }
+  }
+
+  const boxCollision = (box1, box2) => {
+    const zCollision = box1.front >= box2.back && box1.back <= box2.front;
+    const yCollision =
+      box1.bottom + box1.velocity.y <= box2.top && box1.top >= box2.bottom;
+    const xCollision = box1.right >= box2.left && box1.left <= box2.right;
+    return zCollision && xCollision && yCollision;
+  };
+
+  // Add player
+  const cube = new Box({
+    width: 1,
+    height: 1,
+    depth: 1,
+    velocity: { x: 0, y: -0.01, z: 0 },
+  });
+  cube.castShadow = true;
+  scene.add(cube);
+
+  // Add ground
+  const ground = new Box({
+    width: 10,
+    height: 0.5,
+    depth: 50,
+    color: "#0369a1",
+    position: {
+      x: 0,
+      y: -2,
+      z: 0,
+    },
+  });
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Lighting
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.y = 3;
+  light.position.z = 1;
+  light.castShadow = true;
+  scene.add(light);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+  camera.position.z = 5;
+
+  const keys = {
+    a: { pressed: false },
+    d: { pressed: false },
+    w: { pressed: false },
+    s: { pressed: false },
+    space: { pressed: false },
+  };
+
+  // Events
+  window.addEventListener("keydown", (e) => {
+    switch (e.code) {
+      case "KeyA":
+      case "ArrowLeft":
+        keys.a.pressed = true;
+        break;
+      case "KeyD":
+      case "ArrowRight":
+        keys.d.pressed = true;
+        break;
+      case "KeyW":
+      case "ArrowUp":
+        keys.w.pressed = true;
+        break;
+      case "KeyS":
+      case "ArrowDown":
+        keys.s.pressed = true;
+        break;
+      case "Space":
+      case "ControlLeft":
+        keys.space.pressed = true
+        break;
+    }
+  });
+
+  window.addEventListener("keyup", (e) => {
+    switch (e.code) {
+      case "KeyA":
+      case "ArrowLeft":
+        keys.a.pressed = false;
+        break;
+      case "KeyD":
+      case "ArrowRight":
+        keys.d.pressed = false;
+        break;
+      case "KeyW":
+      case "ArrowUp":
+        keys.w.pressed = false;
+        break;
+      case "KeyS":
+      case "ArrowDown":
+        keys.s.pressed = false;
+        break;
+    }
+  });
+
+  const enemies = [];
+
+  const stopAnimation = (id) => {
+    window.cancelAnimationFrame(id);
+    const end = document.createElement("h1");
+    const body = document.querySelector("body");
+    const canvas = document.querySelector("canvas");
+    canvas.style = "filter: opacity(.8) blur(5px);";
+    body.style =
+      "position: relative; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;";
+    end.style = "position: absolute; color: white; cursor: pointer;";
+    end.innerText = "Game Over";
+    end.onclick = () => window.location.reload();
+    document.body.appendChild(end);
+  };
+
+  let frame = 0;
+  let spawnRate = 150;
+  function animate() {
+    const animationId = requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+
+    // Movemoent
+    cube.velocity.x = 0;
+    cube.velocity.z = 0;
+
+    if (keys.a.pressed) cube.velocity.x = -0.05;
+    else if (keys.d.pressed) cube.velocity.x = 0.05;
+
+    if (keys.w.pressed) cube.velocity.z = -0.05;
+    else if (keys.s.pressed) cube.velocity.z = 0.05;
+
+    if(keys.space.pressed && cube.position.y < -1) cube.velocity.y = 0.08;
+
+    keys.space.pressed = false
+
+    cube.update(ground);
+    enemies.forEach((enemy) => {
+      enemy.update(ground);
+      if (boxCollision(cube, enemy)) stopAnimation(animationId);
+    });
+
+    if (frame % spawnRate === 0) {
+      if (spawnRate > 10) spawnRate -= 10;
+      // Add enemy
+      const enemy = new Box({
+        width: 1,
+        height: 1,
+        depth: 1,
+        velocity: { x: 0, y: 0, z: 0.005 },
+        position: {
+          x: (Math.random() - 0.5) * 10,
+          y: 0,
+          z: -20,
+        },
+        color: "#ff0000",
+        zAccelleration: true,
+      });
+      enemies.push(enemy);
+      scene.add(enemy);
+      enemy.castShadow = true;
+    }
+    frame++;
+  }
+  animate();
+</script>
