@@ -183,7 +183,7 @@
         break;
       case "Space":
       case "ControlLeft":
-        if(stopped) return resetGame()
+        if (stopped) return resetGame()
         keys.space.pressed = true
         break;
       case "Escape":
@@ -250,13 +250,18 @@
     arrowLeft.innerText = '◄'
     arrowRight.innerText = '►'
 
-    arrowUp.style = 'margin: 0;'
-    arrowDown.style = 'margin: 0;'
-    arrowLeft.style = 'margin: 0;'
-    arrowRight.style = 'margin: 0;'
+    arrowUp.style = 'margin: 0; font-size: 8vw'
+    arrowDown.style = 'margin: 0; font-size: 8vw'
+    arrowLeft.style = 'margin: 0; font-size: 8vw'
+    arrowRight.style = 'margin: 0; font-size: 8vw'
 
-    controls.style = 'display: flex; flex-direction: column; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; margin: 1rem; align-items: center; color: white; height: 8rem; width: 8rem; justify-content: space-between'
-    controlRow.style = 'display: flex; flex-direction: row; justify-content: space-between;'
+    controls.style = 'display: flex; flex-direction: column; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; margin: 2vw; align-items: center; color: white; height: 30vw; width: 30vw; justify-content: space-between'
+    controlRow.style = 'display: flex; flex-direction: row; justify-content: space-between; width: 30vw;'
+
+    arrowUp.onclick = () => cube.velocity.z = -0.05;
+    arrowDown.onclick = () => cube.velocity.z = 0.05;
+    arrowLeft.onclick = () => cube.velocity.x = -0.05;
+    arrowRight.onclick = () => cube.velocity.x = 0.05;
 
     controlRow.append(arrowLeft, arrowRight)
     controls.append(arrowUp, controlRow, arrowDown)
@@ -264,7 +269,7 @@
     body.append(controls)
   }
 
-  renderControls()
+  if (window.innerWidth < 1024) renderControls()
 
   let frame = 0;
   let spawnRate = 150;
